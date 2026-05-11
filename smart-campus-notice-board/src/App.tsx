@@ -41,10 +41,7 @@ function Header() {
                    <p className="font-display text-[9px] text-heritage-gold uppercase tracking-widest">{profile?.display_name}</p>
                    <p className="text-[7px] text-heritage-gold/40 uppercase tracking-tighter">{profile?.role}</p>
                 </div>
-                <button 
-                  onClick={logout}
-                  className="w-8 h-8 rounded-full border border-heritage-gold/20 p-0.5 hover:border-heritage-gold transition-colors"
-                >
+                <div className="w-8 h-8 rounded-full border border-heritage-gold/20 p-0.5">
                   <div className="w-full h-full rounded-full overflow-hidden bg-heritage-gold/10 flex items-center justify-center">
                     {user.user_metadata?.avatar_url ? (
                       <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -52,6 +49,14 @@ function Header() {
                       <User size={14} className="text-heritage-gold" />
                     )}
                   </div>
+                </div>
+                
+                <button 
+                  onClick={logout}
+                  title="Log Out"
+                  className="ml-2 text-heritage-gold/40 hover:text-heritage-gold hover:scale-110 transition-all"
+                >
+                  <LogOut size={16} />
                 </button>
              </div>
            )}

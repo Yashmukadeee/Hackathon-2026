@@ -9,9 +9,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. Create custom types
 DO $$ BEGIN
   CREATE TYPE user_role AS ENUM ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin', 'Publisher');
-EXCEPTION WHEN duplicate_object THEN
-  ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'Publisher';
+EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- Add new values outside of the DO block (Postgres requirement)
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'Publisher';
 
 DO $$ BEGIN
   CREATE TYPE notice_category AS ENUM ('Academic', 'Event', 'Administrative', 'General');
