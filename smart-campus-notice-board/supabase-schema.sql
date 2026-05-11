@@ -7,14 +7,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. Create custom types
-DO $$ BEGIN
-  CREATE TYPE user_role AS ENUM ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin', 'Publisher');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
--- Add new values outside of the DO block (Postgres requirement)
-ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'Publisher';
-
+-- 2. Create custom types
 DO $$ BEGIN
   CREATE TYPE notice_category AS ENUM ('Academic', 'Event', 'Administrative', 'General');
 EXCEPTION WHEN duplicate_object THEN NULL;
@@ -30,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   display_name TEXT NOT NULL DEFAULT 'Campus User',
-  role user_role NOT NULL DEFAULT 'Student',
+  role TEXT NOT NULL DEFAULT 'Student' CHECK (role IN ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin', 'Publisher')),
   department TEXT,
   year TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
