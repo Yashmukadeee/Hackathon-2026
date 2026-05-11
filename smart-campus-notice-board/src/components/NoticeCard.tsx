@@ -1,115 +1,128 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { CampusNotice } from '../types';
 import { cn } from '../lib/utils';
 
 interface NoticeCardProps {
   notice: CampusNotice;
+  index: number;
 }
 
-export function NoticeCard({ notice }: NoticeCardProps) {
+export function NoticeCard({ notice, index }: NoticeCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const urgencyStyles = {
-    Critical: "bg-red-600 text-white",
-    Important: "bg-yellow-400 text-black",
-    Normal: "bg-black text-white",
-    Info: "bg-zinc-200 text-zinc-600",
+  // Rotate notes slightly for a realistic "pinned" look
+  const rotation = (index % 3 - 1) * 2; 
+
+  const noteColors = {
+    Critical: "bg-[#ff4d4d] text-white", // Red for critical
+    Important: "bg-[#ffd966] text-black", // Yellow
+    Normal: "bg-[#e2f0d9] text-black",   // Green
+    Info: "bg-[#daeef3] text-black",     // Blue
   };
 
   const formattedDate = notice.created_at
-    ? new Date(notice.created_at)
-    : new Date();
-    
-  const month = formattedDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-  const day = formattedDate.getDate();
+    ? new Date(notice.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+    : "Recently";
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1, rotate: rotation }}
+      whileHover={{ scale: 1.05, rotate: 0, zIndex: 20 }}
       className={cn(
-        "group relative flex gap-6 border-4 border-black bg-white p-6 transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]",
-        notice.urgency === 'Critical' && "bg-white"
+        "sticky-note w-full sm:w-64 aspect-square flex flex-col justify-between cursor-pointer",
+        noteColors[notice.urgency]
       )}
+      onClick={() => setIsExpanded(!isExpanded)}
     >
-      {/* Date Sideline */}
-      <div className="flex flex-col items-center justify-start border-r-2 border-dashed border-black pr-6 pt-1">
-        <span className="text-xs font-black uppercase tracking-widest text-zinc-400">{month}</span>
-        <span className="text-4xl font-black leading-none">{day}</span>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between border-b border-black/10 pb-1">
+          <span className="text-[10px] font-bold uppercase opacity-60 tracking-wider">
+            {formattedDate} • {notice.category}
+          </span>
+          {notice.urgency === 'Critical' && (
+            <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
+          )}
+        </div>
+        
+        <h3 className={cn(
+          "font-handwriting text-xl leading-tight",
+          notice.urgency === 'Critical' ? "font-bold" : "font-medium"
+        )}>
+          {notice.title}
+        </h3>
+        
+        <p className="font-handwriting text-sm opacity-80 line-clamp-3">
+          {notice.summary || notice.content}
+        </p>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <span className={cn(
-                "px-2 py-0.5 text-[10px] font-black uppercase tracking-wider",
-                urgencyStyles[notice.urgency]
-              )}>
-                {notice.urgency}
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-tight text-zinc-500">
-                {notice.author_name} • {notice.category}
-              </span>
-            </div>
-            <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-tighter text-black">
-              {notice.title}
-            </h3>
-          </div>
+      <div className="mt-auto pt-2 flex items-center justify-between border-t border-black/10">
+        <span className="text-[9px] font-black uppercase tracking-tighter opacity-50">
+          {notice.author_name}
+        </span>
+        <div className="flex items-center gap-1 opacity-40">
+           <span className="text-[9px] font-bold italic">Read more</span>
         </div>
+      </div>
 
-        {/* Content */}
-        <div className="space-y-4">
-          {notice.summary && (
-            <div className={cn(
-              "border-l-4 p-4 text-sm font-bold italic leading-relaxed",
-              notice.urgency === 'Critical' ? "border-red-600 bg-red-50" : "border-black bg-zinc-50"
-            )}>
-              AI Summary: {notice.summary}
-            </div>
-          )}
-
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
+      {/* Expanded Modal View */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <motion.div
+              layoutId={`card-${notice.id}`}
+              className={cn(
+                "max-w-md w-full p-8 shadow-2xl relative",
+                noteColors[notice.urgency]
+              )}
+            >
+              <button 
+                onClick={() => setIsExpanded(false)}
+                className="absolute top-4 right-4 text-2xl font-black hover:scale-110"
               >
-                <div className="border-t-2 border-zinc-100 pt-4 text-sm font-medium leading-relaxed text-zinc-700 whitespace-pre-wrap">
+                ×
+              </button>
+              
+              <div className="mb-6">
+                <span className="text-xs font-bold uppercase tracking-widest opacity-60">{notice.category}</span>
+                <h2 className="font-handwriting text-4xl mt-2">{notice.title}</h2>
+              </div>
+
+              <div className="space-y-4 font-handwriting text-lg leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+                {notice.summary && (
+                  <div className="bg-black/5 p-4 italic border-l-4 border-black/20">
+                    "{notice.summary}"
+                  </div>
+                )}
+                <div className="whitespace-pre-wrap">
                   {notice.content}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
 
-        {/* Footer / Expand Toggle */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-black"
-        >
-          {isExpanded ? (
-            <>
-              Collapse Details <ChevronUp size={14} strokeWidth={3} />
-            </>
-          ) : (
-            <>
-              Read Full Bulletin <ChevronDown size={14} strokeWidth={3} />
-            </>
-          )}
-        </button>
-      </div>
-      
-      {/* Absolute Urgency Bar */}
-      {notice.urgency === 'Critical' && (
-        <div className="absolute top-0 right-0 h-2 w-full bg-red-600" />
-      )}
+              <div className="mt-8 pt-4 border-t border-black/10 flex justify-between items-end">
+                <div>
+                  <p className="text-[10px] font-bold uppercase opacity-50">Posted By</p>
+                  <p className="font-handwriting text-xl">{notice.author_name}</p>
+                  <p className="text-[10px] opacity-40 uppercase tracking-widest">{notice.department}</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-bold uppercase opacity-50">{formattedDate}</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

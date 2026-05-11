@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, X, Send, Loader2, Sparkles, User, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Sparkles, User, Bot, GraduationCap } from 'lucide-react';
 import { chatAboutNotices } from '../services/aiService';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
@@ -14,7 +14,7 @@ interface Message {
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: 'Hi! I\'m your Campus AI Assistant. You can ask me anything about the recent notices on the board!' }
+    { id: '1', role: 'assistant', content: 'Greetings. I am the Campus Archive Assistant. How may I assist your inquiries today?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -36,7 +36,6 @@ export function ChatWidget() {
     setIsTyping(true);
 
     try {
-      // 1. Fetch relevant notices for context (RAG)
       const { data: noticesData, error } = await supabase
         .from('notices')
         .select('title, category, urgency, content')
@@ -47,14 +46,13 @@ export function ChatWidget() {
         return `Title: ${d.title}\nCategory: ${d.category}\nUrgency: ${d.urgency}\nContent: ${d.content}\n---`;
       }).join('\n');
 
-      // 2. Call AI with context
       const responseText = await chatAboutNotices(input, context);
       
       const assistantMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: responseText };
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Chat widget error:", error);
-      const errorMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: "I'm having a bit of trouble fetching the board data right now. Please try again in a moment." };
+      const errorMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: "I encounter difficulty reaching the records. Pray, try again shortly." };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
@@ -69,45 +67,45 @@ export function ChatWidget() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-6 flex h-[600px] w-[400px] flex-col overflow-hidden border-4 border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+            className="mb-6 flex h-[600px] w-[400px] flex-col overflow-hidden border border-heritage-gold/20 bg-[#121212] shadow-2xl rounded-sm"
           >
             {/* Header */}
-            <div className="flex items-center justify-between bg-black p-5 text-white">
+            <div className="flex items-center justify-between bg-heritage-dark border-b border-heritage-gold/10 p-5 text-heritage-gold">
               <div className="flex items-center gap-3">
-                <div className="bg-yellow-400 p-2 text-black">
-                  <Sparkles size={20} strokeWidth={3} />
+                <div className="bg-heritage-gold/10 p-2 rounded-full border border-heritage-gold/30">
+                  <GraduationCap size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Campus AI</h3>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Retrieval Augmented</p>
+                  <h3 className="font-display text-sm gold-text tracking-widest uppercase">Archive AI</h3>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-heritage-gold/40 italic">Retrieval Augmented</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
-                className="border-2 border-white p-1 hover:bg-white hover:text-black transition-colors"
+                className="text-heritage-gold/40 hover:text-heritage-gold transition-colors"
               >
-                <X size={20} strokeWidth={3} />
+                <X size={20} strokeWidth={2} />
               </button>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-6">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn(
                   "flex items-start gap-4",
                   msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                 )}>
                   <div className={cn(
-                    "border-2 border-black p-2 shrink-0",
-                    msg.role === 'user' ? "bg-white" : "bg-yellow-400"
+                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border",
+                    msg.role === 'user' ? "bg-white/5 border-white/10" : "bg-heritage-gold/10 border-heritage-gold/30"
                   )}>
-                    {msg.role === 'user' ? <User size={18} strokeWidth={3} /> : <Bot size={18} strokeWidth={3} />}
+                    {msg.role === 'user' ? <User size={14} className="text-white/40" /> : <Bot size={14} className="text-heritage-gold" />}
                   </div>
                   <div className={cn(
-                    "border-2 border-black px-4 py-3 text-sm font-bold uppercase tracking-tight",
+                    "px-4 py-3 text-sm rounded-2xl max-w-[80%]",
                     msg.role === 'user' 
-                      ? "bg-white text-black" 
-                      : "bg-black text-white"
+                      ? "bg-white/5 text-white/80 font-serif italic" 
+                      : "bg-heritage-gold/5 text-heritage-gold font-serif italic border border-heritage-gold/10"
                   )}>
                     {msg.content}
                   </div>
@@ -115,32 +113,32 @@ export function ChatWidget() {
               ))}
               {isTyping && (
                 <div className="flex items-start gap-4">
-                  <div className="border-2 border-black p-2 bg-yellow-400">
-                    <Bot size={18} strokeWidth={3} />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-heritage-gold/10 border border-heritage-gold/30">
+                    <Bot size={14} className="text-heritage-gold" />
                   </div>
-                  <div className="border-2 border-black bg-black px-4 py-3">
-                    <Loader2 className="animate-spin text-white" size={18} strokeWidth={3} />
+                  <div className="bg-heritage-gold/5 border border-heritage-gold/10 px-4 py-3 rounded-2xl">
+                    <Loader2 className="animate-spin text-heritage-gold" size={14} />
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="border-t-4 border-black p-6 bg-white">
-              <div className="flex items-center gap-3">
+            <form onSubmit={handleSend} className="border-t border-heritage-gold/10 p-6 bg-heritage-dark">
+              <div className="flex items-center gap-3 bg-white/5 border border-heritage-gold/10 rounded-full px-4 py-1 focus-within:border-heritage-gold/40 transition-all">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="ASK THE AI..."
-                  className="flex-1 text-sm font-black uppercase outline-none placeholder:text-zinc-300"
+                  placeholder="INQUIRE WITHIN..."
+                  className="flex-1 bg-transparent py-2 text-xs font-display tracking-widest uppercase text-heritage-gold outline-none placeholder:text-heritage-gold/20"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isTyping}
-                  className="bg-black p-3 text-white transition-all hover:bg-yellow-400 hover:text-black active:translate-x-1 active:translate-y-1 disabled:opacity-30"
+                  className="text-heritage-gold hover:scale-110 transition-transform active:scale-95 disabled:opacity-30"
                 >
-                  <Send size={20} strokeWidth={3} />
+                  <Send size={18} />
                 </button>
               </div>
             </form>
@@ -150,12 +148,10 @@ export function ChatWidget() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative flex h-20 w-20 items-center justify-center border-4 border-black bg-yellow-400 text-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+        className="group relative w-16 h-16 flex items-center justify-center rounded-full bg-heritage-dark border-2 border-heritage-gold shadow-2xl transition-all hover:scale-110 hover:shadow-heritage-gold/20 active:scale-95"
       >
-        {isOpen ? <X size={32} strokeWidth={4} /> : <MessageSquare size={32} strokeWidth={4} />}
-        <div className="absolute -right-2 -top-2 border-2 border-black border-l-0 border-b-0 bg-red-600 px-1.5 py-0.5 text-[10px] font-black uppercase text-white">
-          AI
-        </div>
+        <div className="absolute inset-0 rounded-full border border-heritage-gold/20 animate-ping opacity-20" />
+        {isOpen ? <X size={24} className="text-heritage-gold" /> : <MessageSquare size={24} className="text-heritage-gold" />}
       </button>
     </div>
   );

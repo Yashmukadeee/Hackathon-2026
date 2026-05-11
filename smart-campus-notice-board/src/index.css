@@ -1,26 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Kalam:wght@300;400;700&family=Inter:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Playfair Display", serif;
+  --font-display: "Cinzel", serif;
+  --font-handwriting: "Kalam", cursive;
+  --font-sans: "Inter", sans-serif;
+  
+  --color-heritage-dark: #0a0a0a;
+  --color-heritage-gold: #c5a059;
+  --color-heritage-chalkboard: #1a2f23;
+  --color-heritage-wood: #2a1810;
 }
 
 @layer base {
   body {
-    @apply bg-white text-black antialiased font-sans cursor-default selection:bg-yellow-400 selection:text-black;
+    @apply bg-[#0f0f0f] text-white antialiased font-sans;
+    background-image: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
   }
 }
 
-.brutalist-border {
-  @apply border-black border-4;
-}
+@layer components {
+  .chalkboard {
+    background-color: var(--color-heritage-chalkboard);
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 80%),
+      url("https://www.transparenttextures.com/patterns/chalkboard.png");
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+    border: 16px solid #3d2b1f;
+    outline: 4px solid #1a110a;
+    position: relative;
+  }
 
-.brutalist-shadow {
-  @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
-}
+  .wood-frame {
+    border: 12px solid #3d2b1f;
+    border-image: linear-gradient(to bottom, #4d3b2f, #2a1810) 1;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 2px #1a110a;
+  }
 
-.brutalist-shadow-hover {
-  @apply transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-[0px] active:translate-y-[0px] active:shadow-none;
-}
+  .sticky-note {
+    @apply p-6 transition-all duration-300;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    position: relative;
+  }
 
+  .sticky-note::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at 30% 30%, #ff4d4d, #800000);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+
+  .gold-text {
+    @apply text-heritage-gold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .nav-link {
+    @apply font-display text-xs tracking-widest uppercase opacity-70 hover:opacity-100 hover:text-heritage-gold transition-all duration-300;
+  }
+}
