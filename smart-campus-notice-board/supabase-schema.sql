@@ -8,8 +8,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. Create custom types
 DO $$ BEGIN
-  CREATE TYPE user_role AS ENUM ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin');
-EXCEPTION WHEN duplicate_object THEN NULL;
+  CREATE TYPE user_role AS ENUM ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin', 'Publisher');
+EXCEPTION WHEN duplicate_object THEN
+  ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'Publisher';
 END $$;
 
 DO $$ BEGIN
@@ -138,7 +139,7 @@ CREATE POLICY "Notices are viewable by authenticated users"
   TO authenticated
   USING (true);
 
--- Faculty, DeptAdmin, SuperAdmin can create notices
+-- Faculty, DeptAdmin, SuperAdmin, Publisher can create notices
 DROP POLICY IF EXISTS "Authorized users can create notices" ON notices;
 CREATE POLICY "Authorized users can create notices"
   ON notices FOR INSERT
@@ -147,7 +148,7 @@ CREATE POLICY "Authorized users can create notices"
     EXISTS (
       SELECT 1 FROM users 
       WHERE users.id = auth.uid() 
-      AND users.role IN ('Faculty', 'DeptAdmin', 'SuperAdmin')
+      AND users.role IN ('Publisher', 'SuperAdmin')
     )
   );
 
@@ -161,7 +162,7 @@ CREATE POLICY "Author or admins can update notices"
     EXISTS (
       SELECT 1 FROM users 
       WHERE users.id = auth.uid() 
-      AND users.role IN ('DeptAdmin', 'SuperAdmin')
+      AND users.role IN ('Publisher', 'SuperAdmin')
     )
   );
 
@@ -175,7 +176,7 @@ CREATE POLICY "Author or admins can delete notices"
     EXISTS (
       SELECT 1 FROM users 
       WHERE users.id = auth.uid() 
-      AND users.role IN ('DeptAdmin', 'SuperAdmin')
+      AND users.role IN ('Publisher', 'SuperAdmin')
     )
   );
 

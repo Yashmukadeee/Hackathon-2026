@@ -189,11 +189,11 @@ function MainDashboard() {
       <div className="flex-1 flex flex-col pt-12">
         <main id="board" className="max-w-7xl mx-auto w-full px-8">
            <div className="grid lg:grid-cols-12 gap-16">
-              <div className={cn("space-y-12", profile?.role === 'Student' ? "lg:col-span-12" : "lg:col-span-8")}>
+              <div className={cn("space-y-12", !['Publisher', 'SuperAdmin'].includes(profile?.role || '') ? "lg:col-span-12" : "lg:col-span-8")}>
                  <NoticeBoard />
               </div>
               
-              {profile?.role !== 'Student' && (
+              {['Publisher', 'SuperAdmin'].includes(profile?.role || '') && (
                 <aside className="lg:col-span-4 space-y-12">
                    <div className="sticky top-32">
                       <AdminPanel />

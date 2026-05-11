@@ -1,4 +1,4 @@
-export type UserRole = "Student" | "Faculty" | "DeptAdmin" | "SuperAdmin";
+export type UserRole = "Student" | "Faculty" | "DeptAdmin" | "SuperAdmin" | "Publisher";
 export type NoticeCategory = "Academic" | "Event" | "Administrative" | "General";
 export type UrgencyLevel = "Critical" | "Important" | "Normal" | "Info";
 
