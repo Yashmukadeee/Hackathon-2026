@@ -26,21 +26,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch or create user profile
   async function fetchOrCreateProfile(authUser: User) {
+    console.log("Auth: Fetching profile for", authUser.id);
     try {
-      // Try to fetch existing profile
-      const { data: existingProfile, error: fetchError } = await supabase
+      // 1. Try to fetch existing profile (Safer than .single())
+      const { data: profiles, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', authUser.id)
-        .single();
+        .eq('id', authUser.id);
 
-      if (existingProfile) {
-        setProfile(existingProfile as CampusUser);
+      if (fetchError) {
+        console.error("Auth: Profile fetch error", fetchError);
+      }
+
+      if (profiles && profiles.length > 0) {
+        console.log("Auth: Existing profile found", profiles[0]);
+        setProfile(profiles[0] as CampusUser);
         return;
       }
 
-      // Create new profile if it doesn't exist
-      const newProfile: Omit<CampusUser, 'id'> & { id: string } = {
+      console.log("Auth: No profile found in DB, creating one...");
+      // 2. Create new profile if it doesn't exist
+      const newProfile = {
         id: authUser.id,
         email: authUser.email || '',
         display_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Campus User',
@@ -51,56 +57,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('users')
         .insert(newProfile)
         .select()
-        .single();
+        .maybeSingle();
 
       if (createError) {
-        // Profile might have been created by a trigger, try fetching again
-        const { data: retryProfile } = await supabase
+        console.warn("Auth: Profile insert failed (likely already exists), retrying fetch...", createError);
+        const { data: retryProfiles } = await supabase
           .from('users')
           .select('*')
-          .eq('id', authUser.id)
-          .single();
+          .eq('id', authUser.id);
         
-        if (retryProfile) {
-          setProfile(retryProfile as CampusUser);
+        if (retryProfiles && retryProfiles.length > 0) {
+          setProfile(retryProfiles[0] as CampusUser);
         } else {
-          console.error('Failed to create or fetch profile:', createError);
+          console.error('Auth: Final profile fetch failed');
         }
       } else if (createdProfile) {
+        console.log("Auth: Profile created successfully", createdProfile);
         setProfile(createdProfile as CampusUser);
       }
     } catch (error) {
-      console.error('Profile fetch/create error:', error);
+      console.error('Auth: Catch-all profile error:', error);
     }
   }
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchOrCreateProfile(session.user).then(() => setLoading(false));
-      } else {
+    console.log("Auth: Initializing...");
+    
+    // Safety Timeout: Force loading to false after 5 seconds if DB hangs
+    const safetyTimer = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth: Safety timeout reached. Forcing loading to false.");
         setLoading(false);
       }
+    }, 5000);
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Auth: Initial session check completed", session?.user?.email || "No user");
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchOrCreateProfile(session.user).finally(() => {
+          clearTimeout(safetyTimer);
+          setLoading(false);
+        });
+      } else {
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      }
+    }).catch(err => {
+      console.error("Auth: GetSession error", err);
+      setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log("Auth: State change event", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchOrCreateProfile(session.user);
-        } else {
-          setProfile(null);
+        
+        try {
+          if (session?.user) {
+            await fetchOrCreateProfile(session.user);
+          } else {
+            setProfile(null);
+          }
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async () => {

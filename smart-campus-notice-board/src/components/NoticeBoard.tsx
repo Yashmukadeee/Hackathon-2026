@@ -38,17 +38,30 @@ export function NoticeBoard() {
   }, []);
 
   const fetchNotices = async () => {
+    console.log("NoticeBoard: Fetching notices...");
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("NoticeBoard: Fetch timeout reached.");
+        setLoading(false);
+      }
+    }, 10000);
+
     try {
       const { data, error } = await supabase
         .from('notices')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("NoticeBoard: Fetch error", error);
+        throw error;
+      }
+      console.log("NoticeBoard: Fetched notices", data?.length || 0);
       setNotices(data || []);
     } catch (err) {
       console.error("Error fetching notices:", err);
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   };
