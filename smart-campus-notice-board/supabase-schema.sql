@@ -108,18 +108,21 @@ ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 -- ──── Users Policies ────
 
 -- Anyone authenticated can read user profiles
+DROP POLICY IF EXISTS "Users are viewable by authenticated users" ON users;
 CREATE POLICY "Users are viewable by authenticated users"
   ON users FOR SELECT
   TO authenticated
   USING (true);
 
 -- Users can insert their own profile
+DROP POLICY IF EXISTS "Users can insert own profile" ON users;
 CREATE POLICY "Users can insert own profile"
   ON users FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = id);
 
 -- Users can update their own profile (except role)
+DROP POLICY IF EXISTS "Users can update own profile" ON users;
 CREATE POLICY "Users can update own profile"
   ON users FOR UPDATE
   TO authenticated
@@ -129,12 +132,14 @@ CREATE POLICY "Users can update own profile"
 -- ──── Notices Policies ────
 
 -- Anyone authenticated can read notices
+DROP POLICY IF EXISTS "Notices are viewable by authenticated users" ON notices;
 CREATE POLICY "Notices are viewable by authenticated users"
   ON notices FOR SELECT
   TO authenticated
   USING (true);
 
 -- Faculty, DeptAdmin, SuperAdmin can create notices
+DROP POLICY IF EXISTS "Authorized users can create notices" ON notices;
 CREATE POLICY "Authorized users can create notices"
   ON notices FOR INSERT
   TO authenticated
@@ -147,6 +152,7 @@ CREATE POLICY "Authorized users can create notices"
   );
 
 -- Author or admins can update notices
+DROP POLICY IF EXISTS "Author or admins can update notices" ON notices;
 CREATE POLICY "Author or admins can update notices"
   ON notices FOR UPDATE
   TO authenticated
@@ -160,6 +166,7 @@ CREATE POLICY "Author or admins can update notices"
   );
 
 -- Author or admins can delete notices
+DROP POLICY IF EXISTS "Author or admins can delete notices" ON notices;
 CREATE POLICY "Author or admins can delete notices"
   ON notices FOR DELETE
   TO authenticated

@@ -247,16 +247,14 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <div className="bg-heritage-dark min-h-screen text-white selection:bg-heritage-gold selection:text-black">
-        <AnimatePresence mode="wait">
-          {!user ? (
-            <LandingPage key="landing" />
-          ) : (
-            <MainDashboard key="dashboard" />
-          )}
-        </AnimatePresence>
-      </div>
-    </AuthProvider>
+    <div className="bg-heritage-dark min-h-screen text-white selection:bg-heritage-gold selection:text-black">
+      <AnimatePresence mode="wait">
+        {!user ? (
+          <LandingPage key="landing" />
+        ) : (
+          <MainDashboard key="dashboard" />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
