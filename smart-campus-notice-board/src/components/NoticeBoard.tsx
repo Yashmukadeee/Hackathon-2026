@@ -1,35 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { CampusNotice } from '../types';
 import { NoticeCard } from './NoticeCard';
-import { Loader2, Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { CampusNotice } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { Filter, Search, Loader2, BookOpen, Sparkles } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 export function NoticeBoard() {
   const [notices, setNotices] = useState<CampusNotice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('');
+  const [category, setCategory] = useState<string>('All');
 
   useEffect(() => {
     fetchNotices();
 
     const channel = supabase
       .channel('notices-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', table: 'notices' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setNotices((prev) => [payload.new as CampusNotice, ...prev]);
-          } else if (payload.eventType === 'DELETE') {
-            setNotices((prev) => prev.filter((n) => n.id !== payload.old.id));
-          } else if (payload.eventType === 'UPDATE') {
-            setNotices((prev) =>
-              prev.map((n) => (n.id === payload.new.id ? (payload.new as CampusNotice) : n))
-            );
-          }
+      .on('postgres_changes', { event: '*', table: 'notices' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setNotices((prev) => [payload.new as CampusNotice, ...prev]);
+        } else if (payload.eventType === 'DELETE') {
+          setNotices((prev) => prev.filter((n) => n.id !== payload.old.id));
+        } else if (payload.eventType === 'UPDATE') {
+          setNotices((prev) =>
+            prev.map((n) => (n.id === payload.new.id ? (payload.new as CampusNotice) : n))
+          );
         }
-      )
+      })
       .subscribe();
 
     return () => {
@@ -38,100 +35,92 @@ export function NoticeBoard() {
   }, []);
 
   const fetchNotices = async () => {
-    console.log("NoticeBoard: Fetching notices...");
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn("NoticeBoard: Fetch timeout reached.");
-        setLoading(false);
-      }
-    }, 10000);
-
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('notices')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("NoticeBoard: Fetch error", error);
-        throw error;
-      }
-      console.log("NoticeBoard: Fetched notices", data?.length || 0);
+      if (error) throw error;
       setNotices(data || []);
-    } catch (err) {
-      console.error("Error fetching notices:", err);
+    } catch (error) {
+      console.error('Error fetching notices:', error);
     } finally {
-      clearTimeout(timeout);
       setLoading(false);
     }
   };
 
-  const filteredNotices = notices.filter(n => 
-    n.title.toLowerCase().includes(filter.toLowerCase()) ||
-    n.content.toLowerCase().includes(filter.toLowerCase())
-  );
+  const filteredNotices = category === 'All' 
+    ? notices 
+    : notices.filter(n => n.category === category);
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="animate-spin text-heritage-gold" size={32} />
-        <span className="font-display text-xs tracking-widest uppercase text-heritage-gold">Consulting the Archives...</span>
+      <div className="h-[600px] flex flex-col items-center justify-center gap-6">
+        <Loader2 className="animate-spin text-heritage-gold/20" size={40} strokeWidth={1} />
+        <p className="font-display text-[10px] text-heritage-gold/20 uppercase tracking-[0.6em]">Consulting the Archives</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-12">
-      {/* Chalkboard Header */}
-      <div className="text-center space-y-4">
-         <div className="inline-block border-y-2 border-heritage-gold/30 px-12 py-2">
-            <h2 className="font-display text-5xl md:text-7xl gold-text tracking-tighter">
-              NOTICE BOARD
-            </h2>
-         </div>
-         <p className="font-serif italic text-heritage-gold/60 text-lg">Stay Updated, Stay Inspired</p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="max-w-md mx-auto relative group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-heritage-gold/40 group-focus-within:text-heritage-gold transition-colors" size={18} />
-        <input 
-          type="text" 
-          placeholder="SEARCH THE BULLETIN..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="w-full bg-white/5 border border-heritage-gold/20 px-12 py-3 rounded-full font-display text-xs tracking-widest text-heritage-gold outline-none focus:border-heritage-gold/50 focus:bg-white/10 transition-all"
-        />
-      </div>
-
-      {/* The Chalkboard Frame */}
-      <div className="chalkboard rounded-sm p-8 md:p-16 min-h-[600px]">
-        {/* Chalk Dust Effect Overlays */}
-        <div className="absolute top-10 left-10 opacity-10 pointer-events-none">
-           <svg width="200" height="200" viewBox="0 0 200 200" className="text-white fill-current">
-              <circle cx="50" cy="50" r="1" />
-              <circle cx="150" cy="120" r="1.5" />
-              <circle cx="80" cy="160" r="0.5" />
-           </svg>
+    <div className="space-y-12 relative">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-8 pb-12 border-b border-heritage-gold/5 relative z-10">
+        <div className="space-y-2 text-center sm:text-left">
+           <div className="flex items-center justify-center sm:justify-start gap-3">
+              <Sparkles className="text-heritage-gold/40" size={16} />
+              <h2 className="font-display text-4xl gold-text tracking-widest uppercase">The Ledger</h2>
+           </div>
+           <p className="font-display text-[9px] text-heritage-gold/30 uppercase tracking-[0.4em]">Official Broadcast Archives • 2026</p>
         </div>
 
+        <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-full border border-heritage-gold/10 backdrop-blur-3xl">
+          {['All', 'Academic', 'Event', 'General'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={cn(
+                "px-6 py-2 rounded-full font-display text-[10px] uppercase tracking-widest transition-all",
+                category === cat 
+                  ? "bg-heritage-gold text-heritage-dark shadow-2xl shadow-black" 
+                  : "text-heritage-gold/40 hover:text-heritage-gold hover:bg-white/5"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative z-10">
         {filteredNotices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-white/20">
-             <p className="font-handwriting text-3xl">The board is currently clean...</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="h-[500px] flex flex-col items-center justify-center gap-6 text-center"
+          >
+            <BookOpen className="text-heritage-gold/5" size={80} strokeWidth={0.5} />
+            <div className="space-y-2">
+              <p className="font-serif italic text-heritage-gold/30 text-2xl">The parchment remains blank.</p>
+              <p className="font-display text-[9px] text-heritage-gold/10 uppercase tracking-widest">No bulletins recorded in this channel</p>
+            </div>
+          </motion.div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-10">
-            {filteredNotices.map((notice, i) => (
-              <NoticeCard key={notice.id} notice={notice} index={i} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 auto-rows-fr">
+            <AnimatePresence mode="popLayout">
+              {filteredNotices.map((notice, i) => (
+                <NoticeCard key={notice.id} notice={notice} index={i} />
+              ))}
+            </AnimatePresence>
           </div>
         )}
+      </div>
 
-        {/* Chalkboard Slogans */}
-        <div className="mt-20 text-center space-y-2 opacity-10 pointer-events-none select-none">
-           <h3 className="font-display text-5xl md:text-8xl text-white">Notice everything,</h3>
-           <h3 className="font-display text-5xl md:text-8xl text-white">Search nothing.</h3>
-        </div>
+      {/* Background Slogans inside the chalkboard frame */}
+      <div className="absolute inset-x-0 bottom-0 py-12 text-center pointer-events-none select-none opacity-5 group-hover:opacity-10 transition-opacity">
+         <h3 className="font-display text-[6vw] leading-none uppercase tracking-tighter text-white">Notice everything</h3>
+         <h3 className="font-display text-[6vw] leading-none uppercase tracking-tighter text-white">Search nothing</h3>
       </div>
     </div>
   );
