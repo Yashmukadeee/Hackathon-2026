@@ -182,4 +182,14 @@ CREATE POLICY "Author or admins can delete notices"
 -- ============================================
 -- Enable Realtime for notices table
 -- ============================================
-ALTER PUBLICATION supabase_realtime ADD TABLE notices;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND schemaname = 'public' 
+    AND tablename = 'notices'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE notices;
+  END IF;
+END $$;
