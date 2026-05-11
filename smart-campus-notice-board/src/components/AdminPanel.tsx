@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Send, Sparkles, Loader2, Image as ImageIcon, Mic, PenTool } from 'lucide-react';
+import { Send, Sparkles, Loader2, Image as ImageIcon, Mic, PenTool, Feather, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { summarizeNotice, classifyUrgency } from '../services/aiService';
@@ -61,109 +61,115 @@ export function AdminPanel() {
   };
 
   return (
-    <div className="border border-heritage-gold/20 bg-[#121212] p-8 shadow-2xl relative overflow-hidden">
-      {/* Decorative corners */}
-      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-heritage-gold/40" />
-      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-heritage-gold/40" />
-      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-heritage-gold/40" />
-      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-heritage-gold/40" />
-
-      <div className="mb-8 flex items-center justify-between border-b border-heritage-gold/10 pb-4">
-        <div className="flex items-center gap-3">
-          <PenTool className="text-heritage-gold" size={20} />
-          <h2 className="font-display text-xl gold-text tracking-widest uppercase">DISPATCH</h2>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="font-display text-[10px] uppercase tracking-[0.2em] text-heritage-gold/40">Bulletin Subject</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={isPosting}
-            placeholder="SUBJECT HEADING..."
-            className="w-full bg-white/5 border border-heritage-gold/10 px-4 py-3 font-serif italic text-heritage-gold outline-none focus:border-heritage-gold/40 transition-all"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="font-display text-[10px] uppercase tracking-[0.2em] text-heritage-gold/40">Departmental Channel</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as NoticeCategory)}
-              disabled={isPosting}
-              className="w-full bg-white/5 border border-heritage-gold/10 px-4 py-3 font-display text-[10px] tracking-widest text-heritage-gold outline-none focus:border-heritage-gold/40 transition-all appearance-none"
-            >
-              <option value="Academic" className="bg-[#121212]">Academic</option>
-              <option value="Event" className="bg-[#121212]">Event</option>
-              <option value="Administrative" className="bg-[#121212]">Administrative</option>
-              <option value="General" className="bg-[#121212]">General</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="font-display text-[10px] uppercase tracking-[0.2em] text-heritage-gold/40">Verification</label>
-            <div className="flex h-[46px] items-center px-4 font-display text-[9px] uppercase tracking-widest text-heritage-gold/30 bg-white/5 border border-dashed border-heritage-gold/10">
-               {profile?.role} Clearance
+    <div className="relative wood-texture p-1 rounded-sm shadow-2xl border border-heritage-gold/20">
+      <div className="bg-heritage-dark/95 p-8 border border-heritage-gold/10 relative overflow-hidden">
+        {/* Decorative Internal Border */}
+        <div className="absolute inset-2 border border-heritage-gold/5 pointer-events-none" />
+        
+        <div className="relative z-10 space-y-8">
+          <div className="flex items-center justify-between border-b border-heritage-gold/10 pb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-heritage-gold/10 flex items-center justify-center border border-heritage-gold/20">
+                <Feather className="text-heritage-gold" size={20} />
+              </div>
+              <div>
+                <h2 className="font-display text-xl gold-text tracking-widest uppercase">The Dispatch</h2>
+                <p className="font-display text-[8px] text-heritage-gold/30 uppercase tracking-[0.4em] mt-1">Broadcast Authorization</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-heritage-gold/10 border border-heritage-gold/20 rounded-full">
+               <ShieldCheck size={12} className="text-heritage-gold" />
+               <span className="font-display text-[9px] text-heritage-gold uppercase tracking-widest">Level {profile?.role}</span>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <label className="font-display text-[10px] uppercase tracking-[0.2em] text-heritage-gold/40">Full Bulletin content</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            disabled={isPosting}
-            rows={5}
-            placeholder="ENTER THE FULL DATASET..."
-            className="w-full resize-none bg-white/5 border border-heritage-gold/10 px-4 py-3 font-serif text-heritage-gold outline-none focus:border-heritage-gold/40 transition-all leading-relaxed"
-          />
-        </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="font-display text-[10px] uppercase tracking-[0.3em] text-heritage-gold/40 ml-1">Bulletin Heading</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isPosting}
+                placeholder="SUBJECT OF RECORD..."
+                className="w-full bg-black/40 border border-heritage-gold/10 px-4 py-4 font-serif italic text-heritage-gold outline-none focus:border-heritage-gold/40 transition-all placeholder:text-heritage-gold/10"
+              />
+            </div>
 
-        {error && (
-          <div className="bg-red-900/20 border border-red-900/30 p-3 text-[10px] font-bold uppercase tracking-widest text-red-400">
-            {error}
-          </div>
-        )}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="font-display text-[10px] uppercase tracking-[0.3em] text-heritage-gold/40 ml-1">Classification</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as NoticeCategory)}
+                  disabled={isPosting}
+                  className="w-full bg-black/40 border border-heritage-gold/10 px-4 py-4 font-display text-[10px] tracking-widest text-heritage-gold outline-none focus:border-heritage-gold/40 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="Academic" className="bg-heritage-dark">Academic</option>
+                  <option value="Event" className="bg-heritage-dark">Event</option>
+                  <option value="Administrative" className="bg-heritage-dark">Administrative</option>
+                  <option value="General" className="bg-heritage-dark">General</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="font-display text-[10px] uppercase tracking-[0.3em] text-heritage-gold/40 ml-1">Station</label>
+                <div className="w-full h-[52px] flex items-center px-4 bg-black/20 border border-dashed border-heritage-gold/10 font-display text-[9px] uppercase tracking-widest text-heritage-gold/20">
+                   {profile?.department || 'Central Hub'}
+                </div>
+              </div>
+            </div>
 
-        <div className="flex items-center justify-between border-t border-heritage-gold/10 pt-6">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              className="w-10 h-10 flex items-center justify-center border border-heritage-gold/10 text-heritage-gold/40 hover:text-heritage-gold hover:border-heritage-gold/30 transition-all rounded-full"
-            >
-              <ImageIcon size={18} />
-            </button>
-            <button
-              type="button"
-              className="w-10 h-10 flex items-center justify-center border border-heritage-gold/10 text-heritage-gold/40 hover:text-heritage-gold hover:border-heritage-gold/30 transition-all rounded-full"
-            >
-              <Mic size={18} />
-            </button>
-          </div>
-          
-          <button
-            type="submit"
-            disabled={isPosting}
-            className="flex items-center gap-3 bg-heritage-gold px-8 py-3 rounded-full text-black font-display text-[10px] font-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isPosting ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                ENGRAVING...
-              </>
-            ) : (
-              <>
-                BROADCAST
-                <Send size={16} />
-              </>
+            <div className="space-y-2">
+              <label className="font-display text-[10px] uppercase tracking-[0.3em] text-heritage-gold/40 ml-1">Broadcast Content</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                disabled={isPosting}
+                rows={4}
+                placeholder="ENGRAVE YOUR MESSAGE INTO THE ARCHIVES..."
+                className="w-full resize-none bg-black/40 border border-heritage-gold/10 px-4 py-4 font-serif text-heritage-gold/80 outline-none focus:border-heritage-gold/40 transition-all leading-relaxed placeholder:text-heritage-gold/10"
+              />
+            </div>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-4 bg-red-900/10 border border-red-900/30 text-[10px] font-display uppercase tracking-widest text-red-400"
+              >
+                {error}
+              </motion.div>
             )}
-          </button>
+
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex gap-4">
+                <button type="button" className="text-heritage-gold/30 hover:text-heritage-gold transition-all"><ImageIcon size={18} /></button>
+                <button type="button" className="text-heritage-gold/30 hover:text-heritage-gold transition-all"><Mic size={18} /></button>
+              </div>
+              
+              <motion.button
+                type="submit"
+                disabled={isPosting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-3 bg-heritage-gold px-10 py-4 rounded-full text-heritage-dark font-display text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-black disabled:opacity-50"
+              >
+                {isPosting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    ENGRAVING...
+                  </>
+                ) : (
+                  <>
+                    SEAL & BROADCAST
+                    <Send size={16} />
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

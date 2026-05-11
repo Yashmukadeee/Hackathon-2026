@@ -87,6 +87,29 @@ function FloatingPaper({ title, color, rotation, x, y, delay }: any) {
   );
 }
 
+function ChalkSketches() {
+  return (
+    <div className="absolute inset-0 pointer-events-none opacity-20">
+      {/* Hand-drawn Arrow pointing to Auth button */}
+      <svg className="absolute bottom-[20%] left-[45%] w-32 h-32 text-white stroke-current fill-none">
+        <path d="M10,10 Q50,0 90,50 M90,50 L70,45 M90,50 L85,30" strokeWidth="2" strokeLinecap="round" />
+        <text x="0" y="80" className="font-hand text-xs italic">Enter here</text>
+      </svg>
+      
+      {/* Graduation Cap sketch */}
+      <svg className="absolute top-12 left-12 w-24 h-24 text-white stroke-current fill-none opacity-40">
+        <path d="M10,40 L50,20 L90,40 L50,60 Z" strokeWidth="1.5" />
+        <path d="M50,60 V80 Q50,90 60,90" strokeWidth="1.5" />
+      </svg>
+
+      {/* Random scribbles */}
+      <div className="absolute top-[15%] right-[15%] font-hand text-[10px] italic text-white/40 rotate-12">
+        "Knowledge is Heritage"
+      </div>
+    </div>
+  );
+}
+
 function LandingPage() {
   const { login, isLoggingIn } = useAuth();
   
@@ -112,6 +135,7 @@ function LandingPage() {
         className="relative w-full max-w-[1400px] h-[85vh] chalkboard rounded-sm p-12 flex flex-col items-center justify-center"
       >
         <IvyVines />
+        <ChalkSketches />
         
         {/* Central Chalk Typography */}
         <div className="relative z-10 text-center space-y-8">
