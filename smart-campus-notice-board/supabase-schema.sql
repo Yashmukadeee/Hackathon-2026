@@ -1,43 +1,31 @@
 -- ============================================
--- Smart Campus Notice Board - Supabase Schema
--- Run this SQL in your Supabase SQL Editor
+-- Smart Campus Notice Board - Ultra-Stable Schema
+-- Optimized for Hackathon Goa 2026
 -- ============================================
 
--- 1. Enable UUID extension (usually already enabled)
+-- 1. Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Create custom types
--- 2. Create custom types
-DO $$ BEGIN
-  CREATE TYPE notice_category AS ENUM ('Academic', 'Event', 'Administrative', 'General');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE TYPE urgency_level AS ENUM ('Critical', 'Important', 'Normal', 'Info');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
--- 3. Create Users table
+-- 2. Create Users table (Refactored for Reliability)
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   display_name TEXT NOT NULL DEFAULT 'Campus User',
   role TEXT NOT NULL DEFAULT 'Student' CHECK (role IN ('Student', 'Faculty', 'DeptAdmin', 'SuperAdmin', 'Publisher')),
-  department TEXT,
+  department TEXT DEFAULT 'General',
   year TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 4. Create Notices table
+-- 3. Create Notices table (Refactored to avoid ENUM transaction issues)
 CREATE TABLE IF NOT EXISTS notices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL CHECK (char_length(title) <= 200),
   content TEXT NOT NULL CHECK (char_length(content) <= 10000),
   summary TEXT,
-  category notice_category NOT NULL DEFAULT 'General',
-  urgency urgency_level NOT NULL DEFAULT 'Normal',
+  category TEXT NOT NULL DEFAULT 'General' CHECK (category IN ('Academic', 'Event', 'Administrative', 'General')),
+  urgency TEXT NOT NULL DEFAULT 'Normal' CHECK (urgency IN ('Critical', 'Important', 'Normal', 'Info')),
   author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   author_name TEXT NOT NULL,
   department TEXT DEFAULT 'General',
@@ -46,14 +34,13 @@ CREATE TABLE IF NOT EXISTS notices (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. Create indexes for performance
+-- 4. Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_notices_created_at ON notices(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notices_category ON notices(category);
 CREATE INDEX IF NOT EXISTS idx_notices_urgency ON notices(urgency);
-CREATE INDEX IF NOT EXISTS idx_notices_author_id ON notices(author_id);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
--- 6. Auto-update updated_at timestamp
+-- 5. Auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -72,7 +59,7 @@ CREATE TRIGGER update_notices_updated_at
   BEFORE UPDATE ON notices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 7. Auto-create user profile on signup
+-- 6. Auto-create user profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -93,48 +80,22 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- ============================================
--- Row Level Security (RLS) Policies
--- ============================================
-
--- Enable RLS on both tables
+-- 7. Row Level Security (RLS) Policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
 
 -- ──── Users Policies ────
-
--- Anyone authenticated can read user profiles
 DROP POLICY IF EXISTS "Users are viewable by authenticated users" ON users;
-CREATE POLICY "Users are viewable by authenticated users"
-  ON users FOR SELECT
-  TO authenticated
-  USING (true);
+CREATE POLICY "Users are viewable by authenticated users" ON users FOR SELECT TO authenticated USING (true);
 
--- Users can insert their own profile
-DROP POLICY IF EXISTS "Users can insert own profile" ON users;
-CREATE POLICY "Users can insert own profile"
-  ON users FOR INSERT
-  TO authenticated
-  WITH CHECK (auth.uid() = id);
-
--- Users can update their own profile (except role)
 DROP POLICY IF EXISTS "Users can update own profile" ON users;
-CREATE POLICY "Users can update own profile"
-  ON users FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON users FOR UPDATE TO authenticated USING (auth.uid() = id);
 
 -- ──── Notices Policies ────
-
--- Anyone authenticated can read notices
 DROP POLICY IF EXISTS "Notices are viewable by authenticated users" ON notices;
-CREATE POLICY "Notices are viewable by authenticated users"
-  ON notices FOR SELECT
-  TO authenticated
-  USING (true);
+CREATE POLICY "Notices are viewable by authenticated users" ON notices FOR SELECT TO authenticated USING (true);
 
--- Faculty, DeptAdmin, SuperAdmin, Publisher can create notices
+-- Explicitly allow Publishers and SuperAdmins to post
 DROP POLICY IF EXISTS "Authorized users can create notices" ON notices;
 CREATE POLICY "Authorized users can create notices"
   ON notices FOR INSERT
@@ -147,44 +108,30 @@ CREATE POLICY "Authorized users can create notices"
     )
   );
 
--- Author or admins can update notices
 DROP POLICY IF EXISTS "Author or admins can update notices" ON notices;
 CREATE POLICY "Author or admins can update notices"
   ON notices FOR UPDATE
   TO authenticated
   USING (
     author_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.role IN ('Publisher', 'SuperAdmin')
-    )
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('Publisher', 'SuperAdmin'))
   );
 
--- Author or admins can delete notices
 DROP POLICY IF EXISTS "Author or admins can delete notices" ON notices;
 CREATE POLICY "Author or admins can delete notices"
   ON notices FOR DELETE
   TO authenticated
   USING (
     author_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.role IN ('Publisher', 'SuperAdmin')
-    )
+    EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('Publisher', 'SuperAdmin'))
   );
 
--- ============================================
--- Enable Realtime for notices table
--- ============================================
+-- 8. Enable Realtime
 DO $$ 
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' 
-    AND schemaname = 'public' 
-    AND tablename = 'notices'
+    WHERE pubname = 'supabase_realtime' AND tablename = 'notices'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE notices;
   END IF;
