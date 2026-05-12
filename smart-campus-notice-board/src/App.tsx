@@ -237,7 +237,7 @@ function LandingPage() {
           </div>
 
           <p className="max-w-xl mx-auto font-serif text-sm sm:text-lg italic text-white/40 leading-relaxed tracking-wider">
-            "Where the weight of tradition meets the speed of light."
+            "Notice everything, search nothing."
           </p>
 
           <motion.button
