@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Loader2, Sparkles, User, Bot, GraduationCap, Feather, BookOpen } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { chatAboutNotices } from '../services/aiService';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
@@ -11,8 +12,20 @@ interface Message {
   content: string;
 }
 
-export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface ChatWidgetProps {
+  forceOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ChatWidget({ forceOpen, onOpenChange }: ChatWidgetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = forceOpen !== undefined ? forceOpen : internalOpen;
+  
+  const setIsOpen = (val: boolean) => {
+    if (onOpenChange) onOpenChange(val);
+    setInternalOpen(val);
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', role: 'assistant', content: 'Greetings, seeker of knowledge. I am the Archive Scribe. How may I assist your inquiries into the college records today?' }
   ]);
@@ -50,9 +63,13 @@ export function ChatWidget() {
       
       const assistantMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: responseText };
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat widget error:", error);
-      const errorMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: "I encounter difficulty reaching the records. Pray, try again shortly." };
+      const errorMessage: Message = { 
+        id: (Date.now() + 1).toString(), 
+        role: 'assistant', 
+        content: `I encounter difficulty reaching the records. Error: ${error.message || 'Unknown Uplink Failure'}` 
+      };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
@@ -60,7 +77,7 @@ export function ChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-10 right-10 z-[100]">
+    <div className="fixed bottom-10 right-10 z-[1001]">
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -110,12 +127,12 @@ export function ChatWidget() {
                      </span>
                   </div>
                   <div className={cn(
-                    "px-6 py-4 text-base leading-relaxed font-serif shadow-sm",
+                    "px-6 py-4 text-sm leading-relaxed font-serif shadow-sm prose prose-sm max-w-full",
                     msg.role === 'user' 
                       ? "bg-black/5 text-black italic rounded-l-2xl rounded-tr-2xl border-r-4 border-black/20" 
-                      : "bg-white/40 text-black rounded-r-2xl rounded-tl-2xl border-l-4 border-black/10"
+                      : "bg-white/40 text-black rounded-r-2xl rounded-tl-2xl border-l-4 border-black/10 prose-p:my-1 prose-strong:text-black"
                   )}>
-                    {msg.content}
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 </motion.div>
               ))}
@@ -167,7 +184,6 @@ export function ChatWidget() {
           </div>
         )}
         
-        {/* Tooltip */}
         {!isOpen && (
           <div className="absolute right-full mr-6 px-4 py-2 bg-heritage-gold text-heritage-dark font-display text-[10px] uppercase tracking-[0.3em] rounded-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-2xl">
             Consult the Scribe

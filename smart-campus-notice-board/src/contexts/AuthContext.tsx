@@ -159,9 +159,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    // Force immediate local UI update in case the database connection hangs
+    setUser(null);
+    setSession(null);
     setProfile(null);
     setLoginError(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Network error during logout:", error);
+    }
   };
 
   return (

@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS notices (
   author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   author_name TEXT NOT NULL,
   department TEXT DEFAULT 'General',
+  links JSONB DEFAULT NULL,
+  poll JSONB DEFAULT NULL,
+  is_survey BOOLEAN DEFAULT FALSE,
   expiry_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
