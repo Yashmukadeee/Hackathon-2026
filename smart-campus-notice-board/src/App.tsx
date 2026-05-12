@@ -226,21 +226,26 @@ function LandingPage() {
         className="relative w-full max-w-[1500px] h-[90vh] chalkboard rounded-sm p-12 flex flex-col items-center justify-center"
       >
         <div className="absolute inset-2 border border-white/5 pointer-events-none" />
-        <div className="relative z-10 text-center space-y-12">
-          <h1 className="text-[8vw] sm:text-[6rem] font-serif uppercase leading-[1.1] gold-text tracking-[0.2em] px-4 drop-shadow-2xl font-light pb-4">
-            HERITAGE BOARD
-          </h1>
+        <div className="relative z-10 text-center space-y-16">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <span className="text-[12px] sm:text-[14px] font-serif uppercase tracking-[1em] text-white/50 ml-[1em]">
+              The
+            </span>
+            <h1 className="text-[10vw] sm:text-[6rem] md:text-[8rem] font-serif uppercase leading-none text-white tracking-[0.1em] px-4 drop-shadow-2xl font-normal">
+              HERITAGE BOARD
+            </h1>
+          </div>
 
-          <p className="max-w-xl mx-auto font-serif text-xl italic text-heritage-paper/40 leading-relaxed">
+          <p className="max-w-xl mx-auto font-serif text-sm sm:text-lg italic text-white/40 leading-relaxed tracking-wider">
             "Where the weight of tradition meets the speed of light."
           </p>
 
           <motion.button
             onClick={login}
             disabled={isLoggingIn}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 50px rgba(212,175,55,0.2)" }}
+            whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,1)", color: "#000" }}
             whileTap={{ scale: 0.98 }}
-            className="mt-12 px-20 py-6 bg-heritage-gold text-heritage-dark font-display text-[11px] font-black uppercase tracking-[0.5em] rounded-sm transition-all shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)]"
+            className="mt-12 px-16 py-5 bg-transparent border border-white text-white font-serif text-[12px] font-normal uppercase tracking-[0.4em] transition-all duration-500 overflow-hidden"
           >
             {isLoggingIn ? "DECRYPTING..." : "ENTER THE SCRIPTORIUM"}
           </motion.button>
