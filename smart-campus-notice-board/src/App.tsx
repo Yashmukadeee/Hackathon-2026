@@ -228,10 +228,10 @@ function LandingPage() {
         <div className="absolute inset-2 border border-white/5 pointer-events-none" />
         <div className="relative z-10 text-center space-y-16">
           <div className="flex flex-col items-center justify-center space-y-4">
-            <span className="text-[12px] sm:text-[14px] font-serif uppercase tracking-[1em] text-white/50 ml-[1em]">
+            <span className="text-[10px] sm:text-[12px] font-serif uppercase tracking-[1em] text-heritage-gold/80 ml-[1em]">
               The
             </span>
-            <h1 className="text-[10vw] sm:text-[6rem] md:text-[8rem] font-serif uppercase leading-none text-white tracking-[0.1em] px-4 drop-shadow-2xl font-normal">
+            <h1 className="text-[8vw] sm:text-[4.5rem] md:text-[5.5rem] font-serif uppercase leading-none gold-text tracking-[0.15em] px-4 drop-shadow-2xl font-normal">
               HERITAGE BOARD
             </h1>
           </div>
