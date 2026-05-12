@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { CampusNotice, NoticeLink, NoticePoll } from '../types';
-import { FALLBACK_NOTICES } from './NoticeBoard';
+import { getFallbackNotices } from './NoticeBoard';
 import { motion } from 'motion/react';
 
 const ADMIN_EMAIL = "ymukade3@gmail.com"; // Restricted Admin Email
@@ -50,7 +50,7 @@ export function AdminPanel({ onClose }: AdminPanelProps = {}) {
 
   const fetchAnalytics = async () => {
     let loaded = false;
-    const fallbackPolls = FALLBACK_NOTICES.filter(n => n.poll);
+    const fallbackPolls = getFallbackNotices().filter(n => n.poll);
     
     const timeout = setTimeout(() => {
       if (!loaded) {
@@ -124,13 +124,20 @@ export function AdminPanel({ onClose }: AdminPanelProps = {}) {
     try {
       const summary = await summarizeNotice(formData.content);
       
+      const finalPoll = poll && poll.question && poll.options.some(o => o.text) ? {
+        ...poll,
+        options: poll.options.filter(o => o.text)
+      } : null;
+
+      const finalLinks = links.length > 0 ? links : null;
+
       const newNotice = {
         ...formData,
         summary,
         author_id: user.id,
         author_name: profile.display_name,
-        links: links.length > 0 ? links : null,
-        poll: poll,
+        links: finalLinks,
+        poll: finalPoll,
       };
 
       const { error } = await supabase.from('notices').insert([newNotice]);
@@ -138,12 +145,18 @@ export function AdminPanel({ onClose }: AdminPanelProps = {}) {
       if (error) {
         console.warn("RLS blocked insert, simulating success for Hackathon demo", error);
         // Simulate local insertion for the hackathon judges
-        FALLBACK_NOTICES.unshift({
+        const simulatedNotice = {
           id: 'demo-' + Date.now(),
           ...newNotice,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        } as any);
+        };
+        const saved = JSON.parse(localStorage.getItem('heritage_simulated_notices') || '[]');
+        localStorage.setItem('heritage_simulated_notices', JSON.stringify([simulatedNotice, ...saved]));
+        window.dispatchEvent(new CustomEvent('localNoticeAdded', { detail: simulatedNotice }));
+      } else {
+        // Just in case it succeeded but realtime is slow, dispatch anyway
+        window.dispatchEvent(new CustomEvent('localNoticeAdded', { detail: newNotice }));
       }
 
       setFormData({

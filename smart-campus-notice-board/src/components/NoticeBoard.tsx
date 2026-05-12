@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Filter, Search, Loader2, BookOpen, Sparkles, ScrollText } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-export const FALLBACK_NOTICES: CampusNotice[] = [
+export const DEFAULT_FALLBACKS: CampusNotice[] = [
   {
     id: 'fb1',
     title: "BREAKTHROUGH: The End of Gravity",
@@ -151,6 +151,15 @@ export const FALLBACK_NOTICES: CampusNotice[] = [
   }
 ];
 
+export const getFallbackNotices = (): CampusNotice[] => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('heritage_simulated_notices') || '[]');
+    return [...saved, ...DEFAULT_FALLBACKS];
+  } catch (e) {
+    return DEFAULT_FALLBACKS;
+  }
+};
+
 export function NoticeBoard() {
   const { user } = useAuth();
   const [notices, setNotices] = useState<CampusNotice[]>([]);
@@ -164,7 +173,10 @@ export function NoticeBoard() {
       .channel('notices-changes')
       .on('postgres_changes', { event: '*', table: 'notices' }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          setNotices((prev) => [payload.new as CampusNotice, ...prev]);
+          setNotices((prev) => {
+            if (prev.find(n => n.id === payload.new.id)) return prev;
+            return [payload.new as CampusNotice, ...prev];
+          });
         } else if (payload.eventType === 'DELETE') {
           setNotices((prev) => prev.filter((n) => n.id !== payload.old.id));
         } else if (payload.eventType === 'UPDATE') {
@@ -175,8 +187,18 @@ export function NoticeBoard() {
       })
       .subscribe();
 
+    const handleLocalAdd = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setNotices((prev) => {
+        if (prev.find(n => n.id === customEvent.detail.id)) return prev;
+        return [customEvent.detail, ...prev];
+      });
+    };
+    window.addEventListener('localNoticeAdded', handleLocalAdd);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('localNoticeAdded', handleLocalAdd);
     };
   }, [user]);                           // ← re-run when user auth state is known
 
@@ -185,7 +207,7 @@ export function NoticeBoard() {
     const timeout = setTimeout(() => {
       if (!loaded) {
         console.warn('Supabase fetch timed out, using fallbacks');
-        setNotices(FALLBACK_NOTICES);
+        setNotices(getFallbackNotices());
         setLoading(false);
       }
     }, 3000); // reduced timeout to 3s
@@ -201,13 +223,15 @@ export function NoticeBoard() {
       if (error) throw error;
       
       if (!data || data.length === 0) {
-        setNotices(FALLBACK_NOTICES);
+        setNotices(getFallbackNotices());
       } else {
-        setNotices(data);
+        // Merge with local simulated notices to be safe
+        const local = getFallbackNotices().filter(n => n.id.startsWith('demo-'));
+        setNotices([...local, ...data]);
       }
     } catch (error) {
       console.error('Error fetching notices:', error);
-      if (!loaded) setNotices(FALLBACK_NOTICES);
+      if (!loaded) setNotices(getFallbackNotices());
     } finally {
       loaded = true;
       clearTimeout(timeout);

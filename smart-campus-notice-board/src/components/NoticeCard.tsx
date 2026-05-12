@@ -17,7 +17,12 @@ interface NoticeCardProps {
 // ─── Inline Mini Poll ──────────────────────────────────────────
 function MiniPoll({ poll, isSurvey }: { poll: NonNullable<CampusNotice['poll']>; isSurvey?: boolean }) {
   const [voted, setVoted] = useState<string | null>(null);
-  const total = poll.options.reduce((s, o) => s + o.votes, 0);
+
+  const activeOptions = poll.options.map(opt => ({
+    ...opt,
+    votes: opt.votes + (voted === opt.id ? 1 : 0)
+  }));
+  const total = activeOptions.reduce((s, o) => s + o.votes, 0);
 
   return (
     <div
@@ -34,7 +39,7 @@ function MiniPoll({ poll, isSurvey }: { poll: NonNullable<CampusNotice['poll']>;
       </div>
 
       <div className="space-y-2">
-        {poll.options.map((opt) => {
+        {activeOptions.map((opt) => {
           const pct = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
           const isChosen = voted === opt.id;
           return (

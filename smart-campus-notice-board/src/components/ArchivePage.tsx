@@ -5,7 +5,7 @@ import { CampusNotice } from '../types';
 import { NoticeCard } from './NoticeCard';
 import { Book, Search, Filter, ArrowLeft, Sparkles, History, Landmark, Scroll, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { FALLBACK_NOTICES } from './NoticeBoard';
+import { getFallbackNotices } from './NoticeBoard';
 
 interface ArchivePageProps {
   onBack: () => void;
@@ -26,7 +26,7 @@ export function ArchivePage({ onBack }: ArchivePageProps) {
     const timeout = setTimeout(() => {
       if (!loaded) {
         console.warn('Supabase fetch timed out, using fallbacks for archives');
-        setNotices(FALLBACK_NOTICES);
+        setNotices(getFallbackNotices());
         setLoading(false);
       }
     }, 3000);
@@ -42,13 +42,14 @@ export function ArchivePage({ onBack }: ArchivePageProps) {
       if (error) throw error;
       
       if (!data || data.length === 0) {
-        setNotices(FALLBACK_NOTICES);
+        setNotices(getFallbackNotices());
       } else {
-        setNotices(data);
+        const local = getFallbackNotices().filter(n => n.id.startsWith('demo-'));
+        setNotices([...local, ...data]);
       }
     } catch (err) {
       console.error("Error fetching archives:", err);
-      if (!loaded) setNotices(FALLBACK_NOTICES);
+      if (!loaded) setNotices(getFallbackNotices());
     } finally {
       loaded = true;
       clearTimeout(timeout);
